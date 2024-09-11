@@ -1,3 +1,4 @@
+import sys
 import requests
 from bs4 import BeautifulSoup
 
@@ -5,25 +6,43 @@ from bs4 import BeautifulSoup
 # catoftheday.com
 # unsplash.com
 
+# selenium, nginx, cdn
 def main():
 
-    print("hello")
-    url = 'https://funnycatpix.com'
-    response = requests.get(url)
-    html_content = response.content
+    # Where we put the stored data
+    DIR_PATH = sys.argv[1]
+    
+    src = "https://www.funnycatpix.com"
+    url = src + '/page/'
+    max_idx = 1519
 
-    soup = BeautifulSoup(html_content, 'html.parser')
+    # prevent duplicates by tracking most recent post
+    # most recent entry, 
+    
 
-    image_tags = soup.find_all('img')
+    for idx in range(max_idx, max_idx + 2):
 
-    for image_tag in image_tags:
-        image_url = image_tag['src']
-        image_name = image_url.split('/')[-1]
-        image_data = requests.get(image_url).content
-        with open(image_name, 'wb') as handler:
-            handler.write(image_data)
+        # Remake every url header and request the page
+        url = url + str(idx)
+        response = requests.get(url)
+        html_content = response.content
 
-    # reduce duplicate entries, hash url
+        # make soup object
+        soup = BeautifulSoup(html_content, 'html.parser')
+
+        # try to scrape for images, if we cannot, return
+        try:
+            posts = soup.find("section",id="posts")
+            image_tags = posts.find_all('img')
+            for image_tag in image_tags:
+                image_url = image_tag['src']
+                image_name = image_tag['alt']
+                
+                print(image_name, image_url, DIR_PATH + image_url.split("/")[-1])
+
+        except AttributeError:
+            print("Last Page Reached. Page " + str(idx - 1))
+        
 
 if __name__ == "__main__":
     main()
